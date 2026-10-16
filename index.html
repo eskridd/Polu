@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https://picsum.photos https://fastly.picsum.photos data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="description" content="Polu is a blind target practice tool. Write your impressions, then reveal the image.">
+<meta name="description" content="Polu is a remote viewing practice tool. Write your impressions, then reveal the image.">
 <meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#141516" media="(prefers-color-scheme:dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%231f4fd8' stroke-width='4'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%231f4fd8'/%3E%3C/svg%3E">
@@ -18,7 +18,7 @@ html{-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0p
 body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
 main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 24px max(20px,env(safe-area-inset-left))}
 main.wide{max-width:980px}
-header{display:flex;justify-content:space-between;align-items:center;padding:8px 0 clamp(20px,6vw,36px)}
+header{display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px}
 h1{margin:0;font-size:22px;letter-spacing:-.4px}
 .code{font:700 clamp(30px,10vw,52px)/1.1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;margin:0 0 8px;word-break:break-all;user-select:all}
 .hint{color:var(--mute);margin:0 0 20px}
@@ -33,6 +33,29 @@ button.main{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
 button.main:hover:not(:disabled){filter:brightness(1.08)}
 button:disabled{opacity:.4;cursor:default}
 button:focus-visible,footer a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.tabs{display:flex;gap:4px;margin:0 0 clamp(20px,5vw,32px);border-bottom:1px solid var(--line)}
+.tab{border:0;border-bottom:2px solid transparent;border-radius:0;margin-bottom:-1px;padding:8px 14px;color:var(--mute)}
+.tab[aria-selected=true]{color:var(--fg);border-bottom-color:var(--acc)}
+.about{max-width:60ch}
+.about h2{margin:0 0 8px;font-size:22px;letter-spacing:-.3px}
+.about h3{margin:26px 0 4px;font-size:16px}
+.about p{margin:0 0 12px}
+.about ul{margin:0 0 12px;padding-left:20px}
+.about li{margin-bottom:6px}
+.about a{color:var(--acc)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.bar h2{margin:0}
+.hist{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:12px}
+.hist li{border:1px solid var(--line);border-radius:12px;padding:14px}
+.meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+.meta b{font:700 16px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.meta span{color:var(--mute);font-size:14px}
+.meta .ok{color:var(--acc)}
+.snip{margin:8px 0 12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
+.snip.none{color:var(--mute)}
+.acts{display:flex;gap:8px}
+.acts button,.bar button{min-height:40px;padding:6px 14px;font-size:15px}
+.del:hover:not(:disabled),.arm{border-color:var(--err)!important;color:var(--err)}
 [hidden]{display:none!important}
 .result{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start;margin-top:8px}
 figure{margin:0}
@@ -48,6 +71,7 @@ footer a:hover{color:var(--fg);transform:translateY(-2px)}
 footer svg{width:22px;height:22px;fill:currentColor}
 @media(prefers-reduced-motion:no-preference){
   .in{animation:rise .55s var(--ease) both;animation-delay:calc(var(--i,0)*70ms)}
+  .hist li{animation:rise .4s var(--ease) both}
   .result>*{animation:rise .45s var(--ease) both}
   .result>:nth-child(2){animation-delay:80ms}
   img{animation:zoom .6s var(--ease) both}
@@ -67,6 +91,12 @@ footer svg{width:22px;height:22px;fill:currentColor}
 <h1>Polu</h1>
 <button id="skip">New target</button>
 </header>
+<div class="tabs in" style="--i:1" role="tablist" aria-label="Sections">
+<button class="tab" role="tab" id="t-practice" aria-selected="true" aria-controls="practice">Practice</button>
+<button class="tab" role="tab" id="t-history" aria-selected="false" aria-controls="history" tabindex="-1">History</button>
+<button class="tab" role="tab" id="t-about" aria-selected="false" aria-controls="about" tabindex="-1">About</button>
+</div>
+<div id="practice" role="tabpanel" aria-labelledby="t-practice">
 <p class="code in" id="code" style="--i:1"></p>
 <p class="hint in" id="hint" style="--i:2">Write what you perceive, then reveal the target.</p>
 <textarea class="in" style="--i:3" id="notes" aria-label="Impressions" placeholder="Shapes, colors, textures, sounds, movement..." spellcheck="false" autocomplete="off" maxlength="20000"></textarea>
@@ -80,6 +110,27 @@ footer svg{width:22px;height:22px;fill:currentColor}
 <section class="result" id="result" hidden>
 <figure><img id="img" alt="Revealed target" width="1200" height="800" decoding="async" referrerpolicy="no-referrer"></figure>
 <div class="mine"><h2>Your impressions</h2><p id="mine"></p></div>
+</section>
+</div>
+<section class="about" id="history" role="tabpanel" aria-labelledby="t-history" hidden>
+<div class="bar"><h2>History</h2><button id="wipe" hidden>Clear all</button></div>
+<p class="hint" id="none">Nothing saved yet. Your practices will show up here.</p>
+<ul class="hist" id="list"></ul>
+<p class="hint">Saved only in this browser.</p>
+</section>
+<section class="about" id="about" role="tabpanel" aria-labelledby="t-about" hidden>
+<h2>What is remote viewing?</h2>
+<p>Remote viewing is the practice of trying to describe a hidden target, such as a photo or a place, without any normal way of knowing what it is. It is done blind: you only have a target code, and you record whatever impressions come to mind.</p>
+<h3>How to practice</h3>
+<ul>
+<li>Write quickly. First impressions are the point.</li>
+<li>Stick to raw perceptions: colors, textures, shapes, sounds, motion, temperature.</li>
+<li>Keep guesses separate. "Round and cold" is a perception; "a lake" is a guess.</li>
+<li>Don't judge or edit as you go.</li>
+<li>After the reveal, compare: note what you got and what you missed.</li>
+</ul>
+<h3>Using Polu</h3>
+<p>Each target has a code and nothing else. Write your impressions in Practice, press Reveal, and Polu shows the image beside your notes. Every practice is saved in your browser, so you can revisit it in History.</p>
 </section>
 <noscript><p class="err">Polu needs JavaScript to run.</p></noscript>
 </main>
@@ -96,13 +147,53 @@ const store={get:k=>{try{return localStorage.getItem(k)||""}catch{return""}},set
 const words=s=>s.trim()?s.trim().split(/\s+/).length:0;
 const calm=matchMedia("(prefers-reduced-motion:reduce)");
 const swap=fn=>document.startViewTransition&&!calm.matches?document.startViewTransition(fn):fn();
-let id,run=0;
+const KEY="polu:v2";
+const parse=s=>{try{const a=JSON.parse(s);return Array.isArray(a)?a.filter(e=>e&&valid(e.id)&&typeof e.notes==="string"&&Number.isFinite(e.t)).map(e=>({id:e.id,notes:e.notes.slice(0,20000),t:e.t,done:!!e.done})).sort((a,b)=>b.t-a.t).slice(0,500):[]}catch{return[]}};
+let hist=parse(store.get(KEY)),tm,arm,id,run=0;
+const flush=()=>{clearTimeout(tm);store.set(KEY,JSON.stringify(hist))};
+const label=()=>{$("t-history").textContent="History"+(hist.length?" ("+hist.length+")":"")};
+function put(p){
+  let e=hist.find(x=>x.id===id);
+  if(!e){e={id,notes:"",t:0,done:false};hist.push(e)}
+  if((p.notes!==undefined&&p.notes!==e.notes)||(p.done&&!e.done))e.t=Date.now();
+  Object.assign(e,p);
+  if(!e.notes.trim()&&!e.done)hist=hist.filter(x=>x!==e);
+  hist=hist.sort((a,b)=>b.t-a.t).slice(0,500);
+  label();clearTimeout(tm);tm=setTimeout(flush,300);
+}
+const el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!==undefined)n.textContent=x;return n};
+function render(){
+  const box=$("list");box.textContent="";
+  $("none").hidden=hist.length>0;$("wipe").hidden=!hist.length;
+  for(const e of hist){
+    const li=el("li"),m=el("div","meta");
+    m.append(el("b","",e.id),el("span","",new Date(e.t).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})),el("span",e.done?"ok":"",e.done?"Revealed":"Draft"));
+    const a=el("div","acts"),open=el("button","",e.done?"View":"Continue"),del=el("button","del","Delete");
+    open.onclick=()=>openEntry(e);
+    del.onclick=()=>{hist=hist.filter(x=>x!==e);flush();label();li.remove();if(!hist.length)render()};
+    a.append(open,del);
+    li.append(m,el("p",e.notes.trim()?"snip":"snip none",e.notes.trim()||"No notes."),a);
+    box.append(li);
+  }
+}
+function openEntry(e){
+  id=e.id;
+  try{history.pushState(null,"","?i="+id)}catch{}
+  if(e.done){load();scrollTo(0,0);$("reveal").click()}
+  else swap(()=>{load();scrollTo(0,0);$("notes").focus({preventScroll:true})});
+}
 function count(){const n=words($("notes").value);$("count").textContent=n+(n===1?" word":" words")}
 function idle(){const b=$("reveal");b.disabled=false;b.classList.remove("busy");b.textContent="Reveal"}
+const TABS=["practice","history","about"];
+function setTab(n){
+  for(const k of TABS){const a=k===n,t=$("t-"+k);$(k).hidden=!a;t.setAttribute("aria-selected",a);t.tabIndex=a?0:-1}
+  if(n==="history")render();
+}
 function load(){
   run++;
+  setTab("practice");
   $("code").textContent=id;
-  $("notes").value=store.get("polu:"+id);
+  $("notes").value=(hist.find(x=>x.id===id)||{}).notes||"";
   for(const k of ["notes","hint","count","reveal","clear"])$(k).hidden=false;
   $("main").classList.remove("wide");
   $("result").hidden=true;
@@ -144,18 +235,41 @@ $("reveal").onclick=async()=>{
     const im=new Image();
     im.referrerPolicy="no-referrer";im.decoding="async";im.src=url;
     await Promise.race([im.decode(),new Promise((_,no)=>setTimeout(no,15000))]);
-    if(t===run)swap(()=>show(url));
+    if(t===run){put({notes:$("notes").value,done:true});swap(()=>show(url))}
   }catch{
     if(t!==run)return;
     $("err").hidden=false;idle();
   }
 };
-$("clear").onclick=()=>{$("notes").value="";store.set("polu:"+id,"");count();$("notes").focus()};
-$("notes").oninput=e=>{store.set("polu:"+id,e.target.value);count()};
+$("clear").onclick=()=>{$("notes").value="";put({notes:""});count();$("notes").focus()};
+$("notes").oninput=e=>{put({notes:e.target.value});count()};
 $("notes").onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"&&!$("reveal").hidden)$("reveal").click()};
+const tab=n=>swap(()=>{setTab(n);scrollTo(0,0)});
+for(const k of TABS)$("t-"+k).onclick=()=>tab(k);
+document.querySelector(".tabs").onkeydown=e=>{
+  const d=e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:0;
+  if(!d)return;
+  const i=TABS.findIndex(k=>$("t-"+k)===document.activeElement);
+  if(i<0)return;
+  const t=$("t-"+TABS[(i+d+TABS.length)%TABS.length]);t.click();t.focus();
+};
+$("wipe").onclick=()=>{
+  const b=$("wipe");
+  if(b.classList.contains("arm")){
+    clearTimeout(arm);b.classList.remove("arm");b.textContent="Clear all";
+    hist=[];flush();label();
+    id=make();try{history.replaceState(null,"","?i="+id)}catch{}
+    load();setTab("history");return;
+  }
+  b.classList.add("arm");b.textContent="Tap again to confirm";
+  arm=setTimeout(()=>{b.classList.remove("arm");b.textContent="Clear all"},4000);
+};
+addEventListener("pagehide",flush);
+addEventListener("storage",e=>{if(e.key===KEY){hist=parse(e.newValue);label();if(!$("history").hidden)render()}});
 $("next").onclick=()=>fresh(true);
 $("skip").onclick=()=>fresh(true);
 addEventListener("popstate",boot);
+label();
 boot();
 </script>
 </body>
