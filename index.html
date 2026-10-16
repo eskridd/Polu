@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https://picsum.photos https://fastly.picsum.photos data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Polu is a blind target practice tool. Write your impressions, then reveal the image.">
+<meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme:light)">
+<meta name="theme-color" content="#141516" media="(prefers-color-scheme:dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%231f4fd8' stroke-width='4'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%231f4fd8'/%3E%3C/svg%3E">
+<title>Polu</title>
+<style>
+:root{--bg:#fafaf8;--fg:#1b1d1f;--mute:#6d727a;--line:#dedfe2;--acc:#1f4fd8;--onacc:#fff;--err:#c0392b;--ease:cubic-bezier(.2,.8,.2,1);color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--bg:#141516;--fg:#ecedee;--mute:#8d9299;--line:#2b2d30;--acc:#7a9cff;--onacc:#101214;--err:#ff7b6b}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 24px max(20px,env(safe-area-inset-left))}
+main.wide{max-width:980px}
+header{display:flex;justify-content:space-between;align-items:center;padding:8px 0 clamp(20px,6vw,36px)}
+h1{margin:0;font-size:22px;letter-spacing:-.4px}
+.code{font:700 clamp(30px,10vw,52px)/1.1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;margin:0 0 8px;word-break:break-all;user-select:all}
+.hint{color:var(--mute);margin:0 0 20px}
+textarea{display:block;width:100%;min-height:clamp(180px,34dvh,320px);resize:vertical;padding:14px;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:12px;transition:border-color .15s}
+textarea:focus{border-color:var(--acc);outline:none}
+.row{display:flex;gap:10px;margin-top:14px;align-items:center}
+.count{margin-left:auto;color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums}
+button{font:inherit;font-weight:600;min-height:44px;padding:10px 20px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer;touch-action:manipulation;transition:border-color .15s,filter .15s,transform .15s var(--ease)}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:active:not(:disabled){transform:scale(.97)}
+button.main{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+button.main:hover:not(:disabled){filter:brightness(1.08)}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible,footer a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+.result{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start;margin-top:8px}
+figure{margin:0}
+.mine{border:1px solid var(--line);border-radius:12px;padding:16px}
+.mine h2{margin:0 0 8px;font-size:15px}
+.mine p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.mine .none{color:var(--mute)}
+img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-radius:12px;background:var(--line)}
+.err{color:var(--err);margin:12px 0 0;font-size:14px}
+footer{display:flex;justify-content:center;padding:16px 20px max(20px,env(safe-area-inset-bottom))}
+footer a{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:var(--mute);transition:color .15s,transform .2s var(--ease)}
+footer a:hover{color:var(--fg);transform:translateY(-2px)}
+footer svg{width:22px;height:22px;fill:currentColor}
+@media(prefers-reduced-motion:no-preference){
+  .in{animation:rise .55s var(--ease) both;animation-delay:calc(var(--i,0)*70ms)}
+  .result>*{animation:rise .45s var(--ease) both}
+  .result>:nth-child(2){animation-delay:80ms}
+  img{animation:zoom .6s var(--ease) both}
+  button.busy{animation:pulse 1s ease-in-out infinite}
+  ::view-transition-group(root){animation-duration:.28s;animation-timing-function:var(--ease)}
+}
+@keyframes rise{from{opacity:0;transform:translate3d(0,10px,0)}}
+@keyframes zoom{from{opacity:0;transform:scale(1.02)}}
+@keyframes pulse{50%{opacity:.75}}
+@media(max-width:760px){.result{grid-template-columns:1fr}}
+@media(max-width:480px){.row{flex-wrap:wrap}.row .main{flex:1}.count{width:100%;margin:0;order:-1}}
+</style>
+</head>
+<body>
+<main id="main">
+<header class="in">
+<h1>Polu</h1>
+<button id="skip">New target</button>
+</header>
+<p class="code in" id="code" style="--i:1"></p>
+<p class="hint in" id="hint" style="--i:2">Write what you perceive, then reveal the target.</p>
+<textarea class="in" style="--i:3" id="notes" aria-label="Impressions" placeholder="Shapes, colors, textures, sounds, movement..." spellcheck="false" autocomplete="off" maxlength="20000"></textarea>
+<div class="row in" style="--i:4">
+<button class="main" id="reveal" title="Ctrl/Cmd + Enter">Reveal</button>
+<button class="main" id="next" hidden>Next target</button>
+<button id="clear">Clear</button>
+<span class="count" id="count">0 words</span>
+</div>
+<p class="err" id="err" role="alert" hidden>The image did not load. Check your connection and try again.</p>
+<section class="result" id="result" hidden>
+<figure><img id="img" alt="Revealed target" width="1200" height="800" decoding="async" referrerpolicy="no-referrer"></figure>
+<div class="mine"><h2>Your impressions</h2><p id="mine"></p></div>
+</section>
+<noscript><p class="err">Polu needs JavaScript to run.</p></noscript>
+</main>
+<footer>
+<a href="https://github.com/eskridd/Polu" target="_blank" rel="noopener noreferrer" aria-label="Polu on GitHub" title="View on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+</footer>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const ABC="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const make=()=>{const b=crypto.getRandomValues(new Uint8Array(8));let s="";for(const x of b)s+=ABC[x%32];return s.slice(0,4)+"-"+s.slice(4)};
+const valid=s=>/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(s);
+const store={get:k=>{try{return localStorage.getItem(k)||""}catch{return""}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+const words=s=>s.trim()?s.trim().split(/\s+/).length:0;
+const calm=matchMedia("(prefers-reduced-motion:reduce)");
+const swap=fn=>document.startViewTransition&&!calm.matches?document.startViewTransition(fn):fn();
+let id,run=0;
+function count(){const n=words($("notes").value);$("count").textContent=n+(n===1?" word":" words")}
+function idle(){const b=$("reveal");b.disabled=false;b.classList.remove("busy");b.textContent="Reveal"}
+function load(){
+  run++;
+  $("code").textContent=id;
+  $("notes").value=store.get("polu:"+id);
+  for(const k of ["notes","hint","count","reveal","clear"])$(k).hidden=false;
+  $("main").classList.remove("wide");
+  $("result").hidden=true;
+  $("err").hidden=true;
+  $("img").removeAttribute("src");
+  $("next").hidden=true;
+  idle();
+  document.title="Polu "+id;
+  count();
+}
+function fresh(push){
+  id=make();
+  try{history[push?"pushState":"replaceState"](null,"","?i="+id)}catch{}
+  swap(()=>{load();scrollTo(0,0)});
+  $("notes").focus({preventScroll:true});
+}
+function boot(){
+  const q=(new URLSearchParams(location.search).get("i")||"").toUpperCase();
+  if(valid(q)){id=q;swap(load)}else fresh(false);
+}
+function show(url){
+  const t=$("notes").value.trim();
+  $("img").src=url;
+  $("mine").textContent=t||"Nothing written.";
+  $("mine").className=t?"":"none";
+  for(const k of ["notes","hint","count","reveal","clear"])$(k).hidden=true;
+  $("main").classList.add("wide");
+  $("result").hidden=false;
+  $("next").hidden=false;
+  $("next").focus({preventScroll:true});
+  scrollTo(0,0);
+}
+$("reveal").onclick=async()=>{
+  const t=++run,b=$("reveal");
+  b.disabled=true;b.classList.add("busy");b.textContent="Revealing…";
+  $("err").hidden=true;
+  const url="https://picsum.photos/seed/polu-"+id+"/1200/800";
+  try{
+    const im=new Image();
+    im.referrerPolicy="no-referrer";im.decoding="async";im.src=url;
+    await Promise.race([im.decode(),new Promise((_,no)=>setTimeout(no,15000))]);
+    if(t===run)swap(()=>show(url));
+  }catch{
+    if(t!==run)return;
+    $("err").hidden=false;idle();
+  }
+};
+$("clear").onclick=()=>{$("notes").value="";store.set("polu:"+id,"");count();$("notes").focus()};
+$("notes").oninput=e=>{store.set("polu:"+id,e.target.value);count()};
+$("notes").onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"&&!$("reveal").hidden)$("reveal").click()};
+$("next").onclick=()=>fresh(true);
+$("skip").onclick=()=>fresh(true);
+addEventListener("popstate",boot);
+boot();
+</script>
+</body>
+</html>
